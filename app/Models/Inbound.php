@@ -8,7 +8,6 @@ class Inbound extends Model
 {
     protected $fillable = [
         'incoming_id',
-        'container_no',
         'delivery_order_id',
         'date_received',
         'nett',
@@ -32,18 +31,28 @@ class Inbound extends Model
     {
         static::created(function ($inbound) {
             if ($inbound->status === 'Diterima') {
-                $inbound->updateStock();
+                $inbound->updateStock('increase');
             }
         });
 
         static::updated(function ($inbound) {
-            if ($inbound->isDirty('status') && $inbound->status === 'Diterima') {
-                $inbound->updateStock();
+            if ($inbound->isDirty('status')) {
+                $oldStatus = $inbound->getOriginal('status');
+                $newStatus = $inbound->status;
+
+                // Jika status berubah dari Diterima ke status lain, kurangi stok
+                if ($oldStatus === 'Diterima' && $newStatus !== 'Diterima') {
+                    $inbound->updateStock('decrease');
+                }
+                // Jika status berubah ke Diterima dari status lain, tambah stok
+                elseif ($oldStatus !== 'Diterima' && $newStatus === 'Diterima') {
+                    $inbound->updateStock('increase');
+                }
             }
         });
     }
 
-    public function updateStock()
+    public function updateStock($action = 'increase')
     {
         // Ambil detail dari delivery order
         $details = $this->deliveryOrder->details;
@@ -51,7 +60,11 @@ class Inbound extends Model
         foreach ($details as $detail) {
             $product = Product::where('sku', $detail->sku)->first();
             if ($product) {
-                $product->stock += $detail->quantity;
+                if ($action === 'increase') {
+                    $product->stock += $detail->quantity;
+                } else {
+                    $product->stock -= $detail->quantity;
+                }
                 $product->save();
             }
         }

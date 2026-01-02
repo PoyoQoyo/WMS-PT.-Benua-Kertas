@@ -60,10 +60,16 @@
               @error('incoming_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4">
-              <label class="form-label">No Container</label>
-              <input type="text" name="container_no" class="form-control @error('container_no') is-invalid @enderror" 
-                     value="{{ old('container_no', $inbound->container_no ?? '') }}" placeholder="CONT-8899" required>
-              @error('container_no') <div class="invalid-feedback">{{ $message }}</div> @enderror
+              <label class="form-label">No. DO</label>
+              <select name="delivery_order_id" class="form-select @error('delivery_order_id') is-invalid @enderror" id="deliveryOrderSelect" required>
+                <option value="">Pilih No. DO</option>
+                @foreach($deliveryOrders as $do)
+                  <option value="{{ $do->id }}" data-details="{{ json_encode($do->details->map(function($d) { return ['sku' => $d->sku, 'name' => $d->product->name ?? '', 'quantity' => $d->quantity]; })) }}" {{ old('delivery_order_id', $inbound->delivery_order_id ?? '') == $do->id ? 'selected' : '' }}>
+                    {{ $do->no_do }} - {{ $do->driver }} ({{ $do->date->format('d-m-Y') }})
+                  </option>
+                @endforeach
+              </select>
+              @error('delivery_order_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4">
               <label class="form-label">Tanggal Diterima</label>
@@ -72,24 +78,18 @@
               @error('date_received') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-12">
-              <label class="form-label">No DO</label>
-              <select name="delivery_order_id" class="form-select @error('delivery_order_id') is-invalid @enderror" required>
-                <option value="">Pilih Delivery Order</option>
-                @foreach($deliveryOrders as $do)
-                  <option value="{{ $do->id }}" {{ old('delivery_order_id', $inbound->delivery_order_id ?? '') == $do->id ? 'selected' : '' }}>
-                    {{ $do->no_do }} - {{ $do->driver }} ({{ $do->date->format('d-m-Y') }})
-                  </option>
-                @endforeach
-              </select>
-              @error('delivery_order_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+              <label class="form-label">Informasi Barang</label>
+              <div class="p-3 bg-light rounded border" id="itemsInfo" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                <small class="text-muted">Pilih DO untuk melihat daftar barang</small>
+              </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label class="form-label">Nett (Kg)</label>
               <input type="number" name="nett" class="form-control @error('nett') is-invalid @enderror" 
                      value="{{ old('nett', $inbound->nett ?? 0) }}" min="0" step="0.01" required>
               @error('nett') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label class="form-label">Gross (Kg)</label>
               <input type="number" name="gross" class="form-control @error('gross') is-invalid @enderror" 
                      value="{{ old('gross', $inbound->gross ?? 0) }}" min="0" step="0.01" required>
@@ -119,5 +119,42 @@
 
   <footer class="custom-footer text-light mt-5 py-3"><div class="container"><small>WMS — Laravel</small></div></footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Handle DO selection to display items
+    document.getElementById('deliveryOrderSelect').addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const itemsInfo = document.getElementById('itemsInfo');
+      
+      if (!this.value) {
+        itemsInfo.innerHTML = '<small class="text-muted">Pilih DO untuk melihat daftar barang</small>';
+        return;
+      }
+      
+      const detailsJson = selectedOption.getAttribute('data-details');
+      if (!detailsJson) {
+        itemsInfo.innerHTML = '<small class="text-muted">Tidak ada data barang</small>';
+        return;
+      }
+      
+      try {
+        const details = JSON.parse(detailsJson);
+        let html = '<div><strong class="d-block mb-2">Barang:</strong>';
+        
+        details.forEach(detail => {
+          html += `<div class="mb-1"><small><strong>${detail.name}</strong> — ${detail.quantity}</small></div>`;
+        });
+        
+        html += '</div>';
+        itemsInfo.innerHTML = html;
+      } catch (e) {
+        itemsInfo.innerHTML = '<small class="text-muted">Error loading items</small>';
+      }
+    });
+    
+    // Trigger on page load if DO is already selected
+    window.addEventListener('load', function() {
+      document.getElementById('deliveryOrderSelect').dispatchEvent(new Event('change'));
+    });
+  </script>
 </body>
 </html>

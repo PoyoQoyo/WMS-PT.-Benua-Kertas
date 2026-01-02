@@ -37,6 +37,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div><h1 class="h4 fw-bold mb-0">Incoming</h1><small class="text-muted">Penerimaan barang dari supplier</small></div>
       <div>
+        <a href="{{ route('inbound.printAll') }}" class="btn btn-info btn-sm" target="_blank"><i class="fa-solid fa-print me-1"></i> Cetak Semua</a>
         <a href="{{ route('inbound.create') }}" class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Tambah Incoming</a>
       </div>
     </div>
@@ -55,8 +56,8 @@
             <thead class="table-dark">
               <tr>
                 <th>ID Incoming</th>
-                <th>No Container</th>
                 <th>No DO</th>
+                <th>Informasi Barang</th>
                 <th>Tanggal Masuk</th>
                 <th>Nett</th>
                 <th>Gross</th>
@@ -68,8 +69,16 @@
               @forelse($inbounds as $inbound)
                 <tr>
                   <td>{{ $inbound->incoming_id }}</td>
-                  <td>{{ $inbound->container_no }}</td>
                   <td>{{ $inbound->deliveryOrder->no_do ?? '-' }}</td>
+                  <td>
+                    <small>
+                      @forelse($inbound->deliveryOrder->details ?? [] as $detail)
+                        <div>{{ $detail->product->name ?? $detail->sku }} ({{ $detail->quantity }} pcs)</div>
+                      @empty
+                        <span class="text-muted">-</span>
+                      @endforelse
+                    </small>
+                  </td>
                   <td>{{ $inbound->date_received->format('d-m-Y') }}</td>
                   <td>{{ number_format($inbound->nett, 2) }}</td>
                   <td>{{ number_format($inbound->gross, 2) }}</td>
@@ -79,7 +88,7 @@
                     </span>
                   </td>
                   <td class="text-center">
-                    <a href="{{ route('inbound.show', $inbound->id) }}" class="btn btn-sm btn-info"><i class="fa-solid fa-eye"></i></a>
+                    <a href="{{ route('inbound.print', $inbound->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
                     <a href="{{ route('inbound.edit', $inbound->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
                     <form action="{{ route('inbound.destroy', $inbound->id) }}" method="POST" style="display:inline;">
                       @method('DELETE')

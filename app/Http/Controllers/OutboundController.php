@@ -10,14 +10,20 @@ class OutboundController extends Controller
 {
     public function index()
     {
-        $outbounds = Outbound::with('product')->latest()->get();
+        $outbounds = Outbound::with('deliveryOrder')->latest()->get();
         return view('wms.outbound', compact('outbounds'));
     }
 
     public function create()
     {
-        $products = Product::where('status', 'Aktif')->where('stock', '>', 0)->get();
-        return view('wms.outbound-form', compact('products'));
+        // Ambil DO dengan tipe "Barang Keluar" yang belum pernah digunakan (status apa pun)
+        $usedDeliveryOrderNos = Outbound::pluck('no_do')->toArray();
+        
+        $deliveryOrders = \App\Models\DeliveryOrder::where('type', 'Barang Keluar')
+            ->whereNotIn('no_do', $usedDeliveryOrderNos)
+            ->get();
+        
+        return view('wms.outbound-form', compact('deliveryOrders'));
     }
 
     public function store(Request $request)
@@ -25,18 +31,25 @@ class OutboundController extends Controller
         $validated = $request->validate([
             'outgoing_id' => 'required|unique:outbounds',
             'date' => 'required|date',
-            'sku' => 'required|exists:products,sku',
-            'quantity' => 'required|numeric|min:1',
             'no_do' => 'required',
+            'nett' => 'required|numeric|min:0',
+            'gross' => 'required|numeric|min:0',
             'status' => 'required|in:Pending,Dikirim,Dibatalkan',
         ]);
 
-        // Validasi stok
-        $product = Product::where('sku', $validated['sku'])->first();
-        if ($validated['status'] === 'Dikirim' && $product->stock < $validated['quantity']) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['quantity' => 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock]);
+        // Validasi stok jika status adalah Dikirim
+        if ($validated['status'] === 'Dikirim') {
+            $deliveryOrder = \App\Models\DeliveryOrder::where('no_do', $validated['no_do'])->first();
+            if ($deliveryOrder) {
+                foreach ($deliveryOrder->details as $detail) {
+                    $product = Product::where('sku', $detail->sku)->first();
+                    if ($product && $product->stock < $detail->quantity) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(['no_do' => "Stok tidak mencukupi untuk SKU {$detail->sku}. Stok tersedia: {$product->stock}"]);
+                    }
+                }
+            }
         }
 
         Outbound::create($validated);
@@ -46,8 +59,20 @@ class OutboundController extends Controller
     public function edit($id)
     {
         $outbound = Outbound::findOrFail($id);
-        $products = Product::where('status', 'Aktif')->get();
-        return view('wms.outbound-form', compact('outbound', 'products'));
+        
+        // Ambil DO dengan tipe "Barang Keluar" yang sudah pernah digunakan (status apa pun), kecuali DO dari outbound yang sedang diedit
+        $usedDeliveryOrderNos = Outbound::where('id', '!=', $id)
+            ->pluck('no_do')
+            ->toArray();
+        
+        $deliveryOrders = \App\Models\DeliveryOrder::where('type', 'Barang Keluar')
+            ->where(function($query) use ($usedDeliveryOrderNos, $outbound) {
+                $query->whereNotIn('no_do', $usedDeliveryOrderNos)
+                      ->orWhere('no_do', $outbound->no_do);
+            })
+            ->get();
+        
+        return view('wms.outbound-form', compact('outbound', 'deliveryOrders'));
     }
 
     public function update(Request $request, $id)
@@ -57,19 +82,24 @@ class OutboundController extends Controller
         $validated = $request->validate([
             'outgoing_id' => 'required|unique:outbounds,outgoing_id,' . $id,
             'date' => 'required|date',
-            'sku' => 'required|exists:products,sku',
-            'quantity' => 'required|numeric|min:1',
             'no_do' => 'required',
+            'nett' => 'required|numeric|min:0',
+            'gross' => 'required|numeric|min:0',
             'status' => 'required|in:Pending,Dikirim,Dibatalkan',
         ]);
 
         // Validasi stok jika status diubah menjadi Dikirim
         if ($validated['status'] === 'Dikirim' && $outbound->status !== 'Dikirim') {
-            $product = Product::where('sku', $validated['sku'])->first();
-            if ($product->stock < $validated['quantity']) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['quantity' => 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock]);
+            $deliveryOrder = \App\Models\DeliveryOrder::where('no_do', $validated['no_do'])->first();
+            if ($deliveryOrder) {
+                foreach ($deliveryOrder->details as $detail) {
+                    $product = Product::where('sku', $detail->sku)->first();
+                    if ($product && $product->stock < $detail->quantity) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(['no_do' => "Stok tidak mencukupi untuk SKU {$detail->sku}. Stok tersedia: {$product->stock}"]);
+                    }
+                }
             }
         }
 
@@ -93,10 +123,15 @@ class OutboundController extends Controller
 
         // Validasi stok jika status diubah menjadi Dikirim
         if ($validated['status'] === 'Dikirim' && $outbound->status !== 'Dikirim') {
-            $product = Product::where('sku', $outbound->sku)->first();
-            if ($product->stock < $outbound->quantity) {
-                return redirect()->back()
-                    ->withErrors(['status' => 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock]);
+            $deliveryOrder = \App\Models\DeliveryOrder::where('no_do', $outbound->no_do)->first();
+            if ($deliveryOrder) {
+                foreach ($deliveryOrder->details as $detail) {
+                    $product = Product::where('sku', $detail->sku)->first();
+                    if ($product && $product->stock < $detail->quantity) {
+                        return redirect()->back()
+                            ->withErrors(['status' => "Stok tidak mencukupi untuk SKU {$detail->sku}. Stok tersedia: {$product->stock}"]);
+                    }
+                }
             }
         }
 
@@ -107,6 +142,18 @@ class OutboundController extends Controller
             : 'Status berhasil diperbarui';
             
         return redirect()->route('outbound.index')->with('success', $message);
+    }
+
+    public function print($id)
+    {
+        $outbound = Outbound::with('deliveryOrder.details.product')->findOrFail($id);
+        return view('wms.prints.outbound-print', compact('outbound'));
+    }
+
+    public function printAll()
+    {
+        $outbounds = Outbound::with('deliveryOrder.details.product')->latest()->get();
+        return view('wms.prints.outbound-print-all', compact('outbounds'));
     }
 }
 

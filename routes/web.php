@@ -53,4 +53,16 @@ Route::prefix('wms')->middleware('auth')->group(function () {
         'only' => ['index', 'create', 'store', 'edit', 'update', 'destroy'],
     ]);
     Route::post('outbound/{id}/status', [OutboundController::class, 'updateStatus'])->name('outbound.updateStatus');
+
+    // Print Routes
+    Route::get('inventory/{id}/print', [InventoryController::class, 'print'])->name('inventory.print');
+    Route::get('delivery-orders/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-orders.print');
+    Route::get('inbound/{id}/print', [InboundController::class, 'print'])->name('inbound.print');
+    Route::get('outbound/{id}/print', [OutboundController::class, 'print'])->name('outbound.print');
+
+    // Print All Routes
+    Route::get('inventory/print-all/data', [InventoryController::class, 'printAll'])->name('inventory.printAll');
+    Route::get('delivery-orders/print-all/data', [DeliveryOrderController::class, 'printAll'])->name('delivery-orders.printAll');
+    Route::get('inbound/print-all/data', [InboundController::class, 'printAll'])->name('inbound.printAll');
+    Route::get('outbound/print-all/data', [OutboundController::class, 'printAll'])->name('outbound.printAll');
 });

@@ -17,7 +17,7 @@ class WmsController extends Controller
             ->where('status', 'Diterima')
             ->count();
             
-        $outboundCount = Outbound::whereDate('created_at', today())->sum('quantity') ?? 0;
+        $outboundCount = Outbound::whereDate('created_at', today())->sum('nett') ?? 0;
         $skuCount = Product::count() ?? 0;
         $newSkuThisWeek = Product::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count() ?? 0;
         
@@ -30,9 +30,9 @@ class WmsController extends Controller
         }
         
         // Recent outgoing
-        $latestOutbound = Outbound::with('product')->latest()->first();
+        $latestOutbound = Outbound::latest()->first();
         if ($latestOutbound) {
-            $recentActivities[] = 'Outgoing ' . $latestOutbound->outgoing_id . ' — ' . $latestOutbound->quantity . ' ' . $latestOutbound->product->unit;
+            $recentActivities[] = 'Outgoing ' . $latestOutbound->outgoing_id . ' (DO: ' . $latestOutbound->no_do . ') — Nett: ' . $latestOutbound->nett . ' Kg, Gross: ' . $latestOutbound->gross . ' Kg';
         }
         
         // Recent product

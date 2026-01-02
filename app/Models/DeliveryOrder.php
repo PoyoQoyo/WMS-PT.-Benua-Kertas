@@ -10,7 +10,8 @@ class DeliveryOrder extends Model
         'no_do',
         'driver',
         'date',
-        'notes'
+        'notes',
+        'type'
     ];
 
     protected $casts = [

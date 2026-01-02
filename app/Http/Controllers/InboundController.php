@@ -16,13 +16,12 @@ class InboundController extends Controller
 
     public function create()
     {
-        // Ambil ID DO yang sudah digunakan di Incoming dengan status "Diterima"
-        $usedDeliveryOrderIds = Inbound::where('status', 'Diterima')
-            ->pluck('delivery_order_id')
-            ->toArray();
+        // Ambil ID DO yang sudah pernah dipakai (status apa pun) di Incoming
+        $usedDeliveryOrderIds = Inbound::pluck('delivery_order_id')->toArray();
         
-        // Ambil DO yang belum digunakan atau belum berstatus "Diterima"
+        // Ambil DO yang belum pernah dipakai dan tipe "Barang Masuk"
         $deliveryOrders = DeliveryOrder::with('details.product')
+            ->where('type', 'Barang Masuk')
             ->whereNotIn('id', $usedDeliveryOrderIds)
             ->get();
             
@@ -33,7 +32,6 @@ class InboundController extends Controller
     {
         $validated = $request->validate([
             'incoming_id' => 'required|unique:inbounds',
-            'container_no' => 'required',
             'delivery_order_id' => 'required|exists:delivery_orders,id',
             'date_received' => 'required|date',
             'nett' => 'required|numeric|min:0',
@@ -49,14 +47,14 @@ class InboundController extends Controller
     {
         $inbound = Inbound::findOrFail($id);
         
-        // Ambil ID DO yang sudah digunakan di Incoming dengan status "Diterima", kecuali DO dari inbound yang sedang diedit
-        $usedDeliveryOrderIds = Inbound::where('status', 'Diterima')
-            ->where('id', '!=', $id)
+        // Ambil ID DO yang sudah pernah dipakai (status apa pun), kecuali DO dari inbound yang sedang diedit
+        $usedDeliveryOrderIds = Inbound::where('id', '!=', $id)
             ->pluck('delivery_order_id')
             ->toArray();
         
-        // Ambil DO yang belum digunakan atau DO dari inbound yang sedang diedit
+        // Ambil DO yang belum digunakan atau DO dari inbound yang sedang diedit dan tipe "Barang Masuk"
         $deliveryOrders = DeliveryOrder::with('details.product')
+            ->where('type', 'Barang Masuk')
             ->where(function($query) use ($usedDeliveryOrderIds, $inbound) {
                 $query->whereNotIn('id', $usedDeliveryOrderIds)
                       ->orWhere('id', $inbound->delivery_order_id);
@@ -72,7 +70,6 @@ class InboundController extends Controller
         
         $validated = $request->validate([
             'incoming_id' => 'required|unique:inbounds,incoming_id,' . $id,
-            'container_no' => 'required',
             'delivery_order_id' => 'required|exists:delivery_orders,id',
             'date_received' => 'required|date',
             'nett' => 'required|numeric|min:0',
@@ -111,6 +108,18 @@ class InboundController extends Controller
             : 'Status berhasil diperbarui';
             
         return redirect()->route('inbound.index')->with('success', $message);
+    }
+
+    public function print($id)
+    {
+        $inbound = Inbound::with('deliveryOrder.details.product')->findOrFail($id);
+        return view('wms.prints.inbound-print', compact('inbound'));
+    }
+
+    public function printAll()
+    {
+        $inbounds = Inbound::with('deliveryOrder.details.product')->latest()->get();
+        return view('wms.prints.inbound-print-all', compact('inbounds'));
     }
 }
 

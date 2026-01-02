@@ -37,12 +37,20 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div><h1 class="h4 fw-bold mb-0">Delivery Order (DO)</h1><small class="text-muted">Rencana pengiriman barang</small></div>
       <div>
+        <a href="{{ route('delivery-orders.printAll') }}" class="btn btn-info btn-sm" target="_blank"><i class="fa-solid fa-print me-1"></i> Cetak Semua</a>
         <a href="{{ route('delivery-orders.create') }}" class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Tambah DO</a>
       </div>
     </div>
 
     @if($message = Session::get('success'))
       <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ $message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
+    @if($message = Session::get('error'))
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{ $message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
@@ -55,6 +63,7 @@
             <thead class="table-dark">
               <tr>
                 <th>No DO</th>
+                <th>Tipe</th>
                 <th>SKU</th>
                 <th>Jumlah</th>
                 <th>Satuan</th>
@@ -69,6 +78,11 @@
                   <tr>
                     @if($index == 0)
                       <td rowspan="{{ $do->details->count() }}">{{ $do->no_do }}</td>
+                      <td rowspan="{{ $do->details->count() }}">
+                        <span class="badge {{ $do->type == 'Barang Masuk' ? 'bg-info' : 'bg-warning' }}">
+                          {{ $do->type }}
+                        </span>
+                      </td>
                     @endif
                     <td>{{ $detail->sku }}</td>
                     <td>{{ $detail->quantity }}</td>
@@ -77,6 +91,7 @@
                       <td rowspan="{{ $do->details->count() }}">{{ $do->driver }}</td>
                       <td rowspan="{{ $do->details->count() }}">{{ $do->date->format('d-m-Y') }}</td>
                       <td class="text-center" rowspan="{{ $do->details->count() }}">
+                        <a href="{{ route('delivery-orders.print', $do->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
                         <a href="{{ route('delivery-orders.edit', $do->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
                         <form action="{{ route('delivery-orders.destroy', $do->id) }}" method="POST" style="display:inline;">
                           @method('DELETE')
@@ -88,7 +103,7 @@
                   </tr>
                 @endforeach
               @empty
-                <tr><td colspan="7" class="text-center text-muted">Tidak ada delivery order</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">Tidak ada delivery order</td></tr>
               @endforelse
             </tbody>
           </table>

@@ -60,36 +60,42 @@
               @error('outgoing_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4">
+              <label class="form-label">No DO</label>
+              <select name="no_do" class="form-select @error('no_do') is-invalid @enderror" id="deliveryOrderSelect" required>
+                <option value="">Pilih No. DO</option>
+                @foreach($deliveryOrders as $do)
+                  <option value="{{ $do->no_do }}" data-details="{{ json_encode($do->details->map(function($d) { return ['sku' => $d->sku, 'name' => $d->product->name ?? '', 'quantity' => $d->quantity]; })) }}" {{ old('no_do', $outbound->no_do ?? '') == $do->no_do ? 'selected' : '' }}>
+                    {{ $do->no_do }} - {{ $do->driver }} ({{ $do->date->format('d-m-Y') }})
+                  </option>
+                @endforeach
+              </select>
+              @error('no_do') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4">
               <label class="form-label">Tanggal</label>
               <input type="date" name="date" class="form-control @error('date') is-invalid @enderror" 
                      value="{{ old('date', isset($outbound) ? $outbound->date->format('Y-m-d') : '') }}" required>
               @error('date') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
-            <div class="col-md-4">
-              <label class="form-label">No DO</label>
-              <input type="text" name="no_do" class="form-control @error('no_do') is-invalid @enderror" 
-                     value="{{ old('no_do', $outbound->no_do ?? '') }}" placeholder="DO-002" required>
-              @error('no_do') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-8">
-              <label class="form-label">Barang (SKU)</label>
-              <select name="sku" class="form-select @error('sku') is-invalid @enderror" required>
-                <option value="">Pilih Barang</option>
-                @foreach($products as $product)
-                  <option value="{{ $product->sku }}" {{ old('sku', $outbound->sku ?? '') == $product->sku ? 'selected' : '' }}>
-                    {{ $product->sku }} - {{ $product->name }} (Stok: {{ $product->stock }})
-                  </option>
-                @endforeach
-              </select>
-              @error('sku') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Jumlah Keluar</label>
-              <input type="number" name="quantity" class="form-control @error('quantity') is-invalid @enderror" 
-                     value="{{ old('quantity', $outbound->quantity ?? 0) }}" min="1" required>
-              @error('quantity') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
             <div class="col-md-12">
+              <label class="form-label">Informasi Barang</label>
+              <div class="p-3 bg-light rounded border" id="itemsInfo" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                <small class="text-muted">Pilih DO untuk melihat daftar barang</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nett (Kg)</label>
+              <input type="number" name="nett" step="0.01" class="form-control @error('nett') is-invalid @enderror" 
+                     value="{{ old('nett', $outbound->nett ?? 0) }}" min="0" required>
+              @error('nett') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Gross (Kg)</label>
+              <input type="number" name="gross" step="0.01" class="form-control @error('gross') is-invalid @enderror" 
+                     value="{{ old('gross', $outbound->gross ?? 0) }}" min="0" required>
+              @error('gross') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4">
               <label class="form-label">Status</label>
               <select name="status" class="form-select @error('status') is-invalid @enderror" required>
                 <option value="Pending" {{ old('status', $outbound->status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
@@ -113,5 +119,42 @@
 
   <footer class="custom-footer text-light mt-5 py-3"><div class="container"><small>WMS — Laravel</small></div></footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Handle DO selection to display items
+    document.getElementById('deliveryOrderSelect').addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const itemsInfo = document.getElementById('itemsInfo');
+      
+      if (!this.value) {
+        itemsInfo.innerHTML = '<small class="text-muted">Pilih DO untuk melihat daftar barang</small>';
+        return;
+      }
+      
+      const detailsJson = selectedOption.getAttribute('data-details');
+      if (!detailsJson) {
+        itemsInfo.innerHTML = '<small class="text-muted">Tidak ada data barang</small>';
+        return;
+      }
+      
+      try {
+        const details = JSON.parse(detailsJson);
+        let html = '<div><strong class="d-block mb-2">Barang:</strong>';
+        
+        details.forEach(detail => {
+          html += `<div class="mb-1"><small><strong>${detail.name}</strong> — ${detail.quantity}</small></div>`;
+        });
+        
+        html += '</div>';
+        itemsInfo.innerHTML = html;
+      } catch (e) {
+        itemsInfo.innerHTML = '<small class="text-muted">Error loading items</small>';
+      }
+    });
+    
+    // Trigger on page load if DO is already selected
+    window.addEventListener('load', function() {
+      document.getElementById('deliveryOrderSelect').dispatchEvent(new Event('change'));
+    });
+  </script>
 </body>
 </html>

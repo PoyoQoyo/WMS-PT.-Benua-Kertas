@@ -37,6 +37,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div><h1 class="h4 fw-bold mb-0">Stok Barang</h1><small class="text-muted">Daftar barang di gudang</small></div>
       <div>
+        <a href="{{ route('inventory.printAll') }}" class="btn btn-info btn-sm" target="_blank"><i class="fa-solid fa-print me-1"></i> Cetak Semua</a>
         <a href="{{ route('inventory.create') }}" class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Tambah Barang</a>
       </div>
     </div>
@@ -81,6 +82,7 @@
                     </span>
                   </td>
                   <td class="text-center">
+                    <a href="{{ route('inventory.print', $product->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
                     <a href="{{ route('inventory.edit', $product->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
                     <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" style="display:inline;">
                       @method('DELETE')

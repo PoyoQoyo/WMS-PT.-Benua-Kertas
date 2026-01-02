@@ -63,4 +63,16 @@ class InventoryController extends Controller
         Product::findOrFail($id)->delete();
         return redirect()->route('inventory.index')->with('success', 'Barang berhasil dihapus');
     }
+
+    public function print($id)
+    {
+        $product = Product::findOrFail($id);
+        return view('wms.prints.inventory-print', compact('product'));
+    }
+
+    public function printAll()
+    {
+        $products = Product::all();
+        return view('wms.prints.inventory-print-all', compact('products'));
+    }
 }

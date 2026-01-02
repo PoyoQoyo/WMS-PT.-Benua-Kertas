@@ -37,6 +37,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div><h1 class="h4 fw-bold mb-0">Outgoing</h1><small class="text-muted">Barang keluar dari gudang</small></div>
       <div>
+        <a href="{{ route('outbound.printAll') }}" class="btn btn-info btn-sm" target="_blank"><i class="fa-solid fa-print me-1"></i> Cetak Semua</a>
         <a href="{{ route('outbound.create') }}" class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Tambah Outgoing</a>
       </div>
     </div>
@@ -55,11 +56,11 @@
             <thead class="table-dark">
               <tr>
                 <th>ID Outgoing</th>
-                <th>Tanggal</th>
-                <th>SKU</th>
-                <th>Nama Barang</th>
-                <th>Jumlah Keluar</th>
                 <th>No DO</th>
+                <th>Informasi Barang</th>
+                <th>Tanggal</th>
+                <th>Nett (Kg)</th>
+                <th>Gross (Kg)</th>
                 <th>Status</th>
                 <th class="text-center">Action</th>
               </tr>
@@ -68,17 +69,26 @@
               @forelse($outbounds as $outbound)
                 <tr>
                   <td>{{ $outbound->outgoing_id }}</td>
-                  <td>{{ $outbound->date->format('d-m-Y') }}</td>
-                  <td>{{ $outbound->sku }}</td>
-                  <td>{{ $outbound->product->name ?? '-' }}</td>
-                  <td>{{ $outbound->quantity }}</td>
                   <td>{{ $outbound->no_do }}</td>
+                  <td>
+                    <small>
+                      @forelse($outbound->deliveryOrder->details ?? [] as $detail)
+                        <div>{{ $detail->product->name ?? $detail->sku }} ({{ $detail->quantity }} pcs)</div>
+                      @empty
+                        <span class="text-muted">-</span>
+                      @endforelse
+                    </small>
+                  </td>
+                  <td>{{ $outbound->date->format('d-m-Y') }}</td>
+                  <td>{{ number_format($outbound->nett, 2) }}</td>
+                  <td>{{ number_format($outbound->gross, 2) }}</td>
                   <td>
                     <span class="badge {{ $outbound->status == 'Dikirim' ? 'bg-success' : ($outbound->status == 'Dibatalkan' ? 'bg-danger' : 'bg-warning') }}">
                       {{ $outbound->status }}
                     </span>
                   </td>
                   <td class="text-center">
+                    <a href="{{ route('outbound.print', $outbound->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
                     <a href="{{ route('outbound.edit', $outbound->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
                     <form action="{{ route('outbound.destroy', $outbound->id) }}" method="POST" style="display:inline;">
                       @method('DELETE')

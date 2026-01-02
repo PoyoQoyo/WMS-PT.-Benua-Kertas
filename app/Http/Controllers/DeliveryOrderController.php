@@ -29,6 +29,7 @@ class DeliveryOrderController extends Controller
             'driver' => 'required',
             'date' => 'required|date',
             'notes' => 'nullable',
+            'type' => 'required|in:Barang Masuk,Barang Keluar',
             'items' => 'required|array|min:1',
             'items.*.sku' => 'required|exists:products,sku',
             'items.*.quantity' => 'required|numeric|min:1',
@@ -40,6 +41,7 @@ class DeliveryOrderController extends Controller
                 'driver' => $validated['driver'],
                 'date' => $validated['date'],
                 'notes' => $validated['notes'] ?? null,
+                'type' => $validated['type'],
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -72,6 +74,7 @@ class DeliveryOrderController extends Controller
             'driver' => 'required',
             'date' => 'required|date',
             'notes' => 'nullable',
+            'type' => 'required|in:Barang Masuk,Barang Keluar',
             'items' => 'required|array|min:1',
             'items.*.sku' => 'required|exists:products,sku',
             'items.*.quantity' => 'required|numeric|min:1',
@@ -83,6 +86,7 @@ class DeliveryOrderController extends Controller
                 'driver' => $validated['driver'],
                 'date' => $validated['date'],
                 'notes' => $validated['notes'] ?? null,
+                'type' => $validated['type'],
             ]);
 
             // Delete old details and create new ones
@@ -104,7 +108,20 @@ class DeliveryOrderController extends Controller
 
     public function destroy($id)
     {
-        DeliveryOrder::findOrFail($id)->delete();
+        $deliveryOrder = DeliveryOrder::findOrFail($id);
+        
+        // Cek apakah DO ini sudah digunakan di Incoming
+        if ($deliveryOrder->inbounds()->count() > 0) {
+            return redirect()->route('delivery-orders.index')
+                ->with('error', 'Delivery Order tidak dapat dihapus karena sudah digunakan di Incoming.');
+        }
+        
+        // Hapus details terlebih dahulu
+        $deliveryOrder->details()->delete();
+        
+        // Kemudian hapus DO
+        $deliveryOrder->delete();
+        
         return redirect()->route('delivery-orders.index')->with('success', 'Delivery Order berhasil dihapus');
     }
 
@@ -112,5 +129,17 @@ class DeliveryOrderController extends Controller
     {
         $deliveryOrder = DeliveryOrder::with('details.product')->findOrFail($id);
         return view('wms.delivery-order-detail', compact('deliveryOrder'));
+    }
+
+    public function print($id)
+    {
+        $deliveryOrder = DeliveryOrder::with('details.product')->findOrFail($id);
+        return view('wms.prints.delivery-order-print', compact('deliveryOrder'));
+    }
+
+    public function printAll()
+    {
+        $deliveryOrders = DeliveryOrder::with('details.product')->get();
+        return view('wms.prints.delivery-order-print-all', compact('deliveryOrders'));
     }
 }

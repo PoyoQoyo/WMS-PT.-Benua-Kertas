@@ -75,6 +75,15 @@
               <label class="form-label">Catatan</label>
               <textarea name="notes" class="form-control" rows="2">{{ old('notes', $deliveryOrder->notes ?? '') }}</textarea>
             </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipe DO</label>
+              <select name="type" class="form-select @error('type') is-invalid @enderror" required>
+                <option value="">Pilih Tipe</option>
+                <option value="Barang Masuk" {{ old('type', $deliveryOrder->type ?? '') == 'Barang Masuk' ? 'selected' : '' }}>Barang Masuk</option>
+                <option value="Barang Keluar" {{ old('type', $deliveryOrder->type ?? '') == 'Barang Keluar' ? 'selected' : '' }}>Barang Keluar</option>
+              </select>
+              @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
           </div>
 
           <hr>
