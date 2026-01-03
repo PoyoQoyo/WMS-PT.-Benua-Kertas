@@ -74,34 +74,57 @@
             </thead>
             <tbody>
               @forelse($deliveryOrders as $do)
-                @foreach($do->details as $index => $detail)
+                @if($do->details->isEmpty())
                   <tr>
-                    @if($index == 0)
-                      <td rowspan="{{ $do->details->count() }}">{{ $do->no_do }}</td>
-                      <td rowspan="{{ $do->details->count() }}">
-                        <span class="badge {{ $do->type == 'Barang Masuk' ? 'bg-info' : 'bg-warning' }}">
-                          {{ $do->type }}
-                        </span>
-                      </td>
-                    @endif
-                    <td>{{ $detail->sku }}</td>
-                    <td>{{ $detail->quantity }}</td>
-                    <td>{{ $detail->unit }}</td>
-                    @if($index == 0)
-                      <td rowspan="{{ $do->details->count() }}">{{ $do->driver }}</td>
-                      <td rowspan="{{ $do->details->count() }}">{{ $do->date->format('d-m-Y') }}</td>
-                      <td class="text-center" rowspan="{{ $do->details->count() }}">
-                        <a href="{{ route('delivery-orders.print', $do->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
-                        <a href="{{ route('delivery-orders.edit', $do->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
-                        <form action="{{ route('delivery-orders.destroy', $do->id) }}" method="POST" style="display:inline;">
-                          @method('DELETE')
-                          @csrf
-                          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data?')"><i class="fa-solid fa-trash"></i></button>
-                        </form>
-                      </td>
-                    @endif
+                    <td>{{ $do->no_do }}</td>
+                    <td>
+                      <span class="badge {{ $do->type == 'Barang Masuk' ? 'bg-info' : 'bg-warning' }}">
+                        {{ $do->type }}
+                      </span>
+                    </td>
+                    <td colspan="3" class="text-muted">Belum ada detail</td>
+                    <td>{{ $do->driver }}</td>
+                    <td>{{ $do->date->format('d-m-Y') }}</td>
+                    <td class="text-center">
+                      <a href="{{ route('delivery-orders.print', $do->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
+                      <a href="{{ route('delivery-orders.edit', $do->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
+                      <form action="{{ route('delivery-orders.destroy', $do->id) }}" method="POST" style="display:inline;">
+                        @method('DELETE')
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data?')"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    </td>
                   </tr>
-                @endforeach
+                @else
+                  @foreach($do->details as $index => $detail)
+                    <tr>
+                      @if($index == 0)
+                        <td rowspan="{{ $do->details->count() }}">{{ $do->no_do }}</td>
+                        <td rowspan="{{ $do->details->count() }}">
+                          <span class="badge {{ $do->type == 'Barang Masuk' ? 'bg-info' : 'bg-warning' }}">
+                            {{ $do->type }}
+                          </span>
+                        </td>
+                      @endif
+                      <td>{{ $detail->sku }}</td>
+                      <td>{{ $detail->quantity }}</td>
+                      <td>{{ $detail->unit }}</td>
+                      @if($index == 0)
+                        <td rowspan="{{ $do->details->count() }}">{{ $do->driver }}</td>
+                        <td rowspan="{{ $do->details->count() }}">{{ $do->date->format('d-m-Y') }}</td>
+                        <td class="text-center" rowspan="{{ $do->details->count() }}">
+                          <a href="{{ route('delivery-orders.print', $do->id) }}" class="btn btn-sm btn-primary" target="_blank"><i class="fa-solid fa-print"></i></a>
+                          <a href="{{ route('delivery-orders.edit', $do->id) }}" class="btn btn-sm btn-warning"><i class="fa-solid fa-edit"></i></a>
+                          <form action="{{ route('delivery-orders.destroy', $do->id) }}" method="POST" style="display:inline;">
+                            @method('DELETE')
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data?')"><i class="fa-solid fa-trash"></i></button>
+                          </form>
+                        </td>
+                      @endif
+                    </tr>
+                  @endforeach
+                @endif
               @empty
                 <tr><td colspan="8" class="text-center text-muted">Tidak ada delivery order</td></tr>
               @endforelse

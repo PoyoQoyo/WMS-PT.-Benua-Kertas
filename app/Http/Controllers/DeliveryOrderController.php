@@ -110,10 +110,14 @@ class DeliveryOrderController extends Controller
     {
         $deliveryOrder = DeliveryOrder::findOrFail($id);
         
-        // Cek apakah DO ini sudah digunakan di Incoming
-        if ($deliveryOrder->inbounds()->count() > 0) {
+        // Cek apakah DO ini sudah digunakan di Incoming / Outgoing
+        if ($deliveryOrder->inbounds()->exists()) {
             return redirect()->route('delivery-orders.index')
                 ->with('error', 'Delivery Order tidak dapat dihapus karena sudah digunakan di Incoming.');
+        }
+        if ($deliveryOrder->outbounds()->exists()) {
+            return redirect()->route('delivery-orders.index')
+                ->with('error', 'Delivery Order tidak dapat dihapus karena sudah digunakan di Outgoing.');
         }
         
         // Hapus details terlebih dahulu

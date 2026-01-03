@@ -50,6 +50,13 @@ class Outbound extends Model
                 }
             }
         });
+
+        static::deleted(function ($outbound) {
+            // Jika data dihapus dan statusnya adalah Dikirim, tambahkan stok kembali
+            if ($outbound->status === 'Dikirim') {
+                $outbound->updateStock('increase');
+            }
+        });
     }
 
     public function updateStock($action = 'decrease')

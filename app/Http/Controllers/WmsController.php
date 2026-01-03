@@ -12,12 +12,20 @@ class WmsController extends Controller
     // Dashboard
     public function dashboard()
     {
-        // Hitung jumlah incoming yang diterima hari ini
-        $inboundCount = Inbound::whereDate('date_received', today())
+        $incomingItems = Inbound::with('deliveryOrder.details')
             ->where('status', 'Diterima')
-            ->count();
-            
-        $outboundCount = Outbound::whereDate('created_at', today())->sum('nett') ?? 0;
+            ->get()
+            ->sum(function ($inbound) {
+                return $inbound->deliveryOrder?->details->sum('quantity') ?? 0;
+            });
+
+        $outgoingItems = Outbound::with('deliveryOrder.details')
+            ->where('status', 'Dikirim')
+            ->get()
+            ->sum(function ($outbound) {
+                return $outbound->deliveryOrder?->details->sum('quantity') ?? 0;
+            });
+
         $skuCount = Product::count() ?? 0;
         $newSkuThisWeek = Product::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count() ?? 0;
         
@@ -41,7 +49,7 @@ class WmsController extends Controller
             $recentActivities[] = 'New SKU ' . $latestProduct->sku . ' - ' . $latestProduct->name . ' added';
         }
 
-        return view('wms.dashboard', compact('inboundCount', 'outboundCount', 'skuCount', 'newSkuThisWeek', 'recentActivities'));
+        return view('wms.dashboard', compact('incomingItems', 'outgoingItems', 'skuCount', 'newSkuThisWeek', 'recentActivities'));
     }
 
     // ===== INVENTORY METHODS =====

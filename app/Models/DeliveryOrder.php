@@ -27,4 +27,9 @@ class DeliveryOrder extends Model
     {
         return $this->hasMany(Inbound::class);
     }
+
+    public function outbounds()
+    {
+        return $this->hasMany(Outbound::class, 'no_do', 'no_do');
+    }
 }

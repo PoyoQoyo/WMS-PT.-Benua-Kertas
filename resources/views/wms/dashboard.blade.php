@@ -47,31 +47,37 @@
   <main class="container mt-4">
     <div class="row g-3">
       <div class="col-12 col-md-4">
-        <div class="card p-3 shadow-sm h-100">
-          <div class="d-flex justify-content-between">
-            <div><h6 class="mb-1 fw-semibold text-muted">Incoming Diterima Hari Ini</h6><div class="fs-3 fw-bold">{{ $inboundCount }} Incoming</div></div>
-            <div class="kpi-icon kpi-blue"><i class="fa-solid fa-arrow-down-wide-short"></i></div>
+        <a href="{{ route('inbound.index') }}" class="text-reset text-decoration-none d-block h-100">
+          <div class="card p-3 shadow-sm h-100">
+            <div class="d-flex justify-content-between">
+              <div><h6 class="mb-1 fw-semibold text-muted">Jumlah Barang Masuk</h6><div class="fs-3 fw-bold">{{ number_format($incomingItems) }} Barang</div></div>
+              <div class="kpi-icon kpi-blue"><i class="fa-solid fa-arrow-down-wide-short"></i></div>
+            </div>
+            <small class="text-muted">Menghitung hanya status Diterima</small>
           </div>
-          <small class="text-muted">Status: Diterima</small>
-        </div>
+        </a>
       </div>
       <div class="col-12 col-md-4">
-        <div class="card p-3 shadow-sm h-100">
-          <div class="d-flex justify-content-between">
-            <div><h6 class="mb-1 fw-semibold text-muted">Outbound Dikirim Hari Ini</h6><div class="fs-3 fw-bold">{{ $outboundCount }} Items</div></div>
-            <div class="kpi-icon kpi-green"><i class="fa-solid fa-arrow-up-wide-short"></i></div>
+        <a href="{{ route('outbound.index') }}" class="text-reset text-decoration-none d-block h-100">
+          <div class="card p-3 shadow-sm h-100">
+            <div class="d-flex justify-content-between">
+              <div><h6 class="mb-1 fw-semibold text-muted">Jumlah Barang Keluar</h6><div class="fs-3 fw-bold">{{ number_format($outgoingItems) }} Barang</div></div>
+              <div class="kpi-icon kpi-green"><i class="fa-solid fa-arrow-up-wide-short"></i></div>
+            </div>
+            <small class="text-muted">Menghitung hanya status Dikirim</small>
           </div>
-          <small class="text-muted">Status: Dikirim</small>
-        </div>
+        </a>
       </div>
       <div class="col-12 col-md-4">
-        <div class="card p-3 shadow-sm h-100">
-          <div class="d-flex justify-content-between">
-            <div><h6 class="mb-1 fw-semibold text-muted">Total Jenis Barang</h6><div class="fs-3 fw-bold">{{ $skuCount }} Jenis</div></div>
-            <div class="kpi-icon kpi-orange"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <a href="{{ route('inventory.index') }}" class="text-reset text-decoration-none d-block h-100">
+          <div class="card p-3 shadow-sm h-100">
+            <div class="d-flex justify-content-between">
+              <div><h6 class="mb-1 fw-semibold text-muted">Total Jenis Barang</h6><div class="fs-3 fw-bold">{{ number_format($skuCount) }} Jenis</div></div>
+              <div class="kpi-icon kpi-orange"><i class="fa-solid fa-boxes-stacked"></i></div>
+            </div>
+            <small class="text-muted">{{ number_format($newSkuThisWeek) }} jenis baru minggu ini</small>
           </div>
-          <small class="text-muted">{{ $newSkuThisWeek }} jenis baru minggu ini</small>
-        </div>
+        </a>
       </div>
     </div>
 

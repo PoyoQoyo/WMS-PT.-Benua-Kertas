@@ -50,6 +50,13 @@ class Inbound extends Model
                 }
             }
         });
+
+        static::deleted(function ($inbound) {
+            // Jika data dihapus dan statusnya adalah Diterima, kurangi stok
+            if ($inbound->status === 'Diterima') {
+                $inbound->updateStock('decrease');
+            }
+        });
     }
 
     public function updateStock($action = 'increase')
